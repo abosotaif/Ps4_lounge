@@ -33,11 +33,13 @@ A comprehensive management system for a gaming lounge, featuring device tracking
 - **Frontend**: React, TypeScript
 - **Styling**: Tailwind CSS (via CDN)
 - **PDF Generation**: jsPDF, jspdf-autotable
-- **Build**: No build step! The project uses native browser ES Modules with an `importmap`.
+- **Transpilation**: Babel Standalone (in-browser transpilation of JSX/TypeScript).
+- **Build**: No build step required for development or deployment. The project uses native browser ES Modules with an `importmap` and in-browser transpilation.
+
 
 ## Getting Started
 
-To run this project locally, you need a simple local web server. Modern browsers have security restrictions (CORS policy) that prevent ES Modules from loading correctly when you open the `index.html` file directly from your filesystem (`file://...`). Serving the files over HTTP is required.
+To run this project locally, you need a simple local web server. The project uses JSX and TypeScript (`.tsx` files) which are not natively supported by browsers. It relies on the Babel Standalone script, included in `index.html`, to transpile the code on-the-fly in the browser. This is why serving the files from a web server is crucial for it to work. Modern browsers have security restrictions (CORS policy) that prevent ES Modules from loading correctly when you open the `index.html` file directly from your filesystem (`file://...`).
 
 ### Prerequisites
 
@@ -46,11 +48,7 @@ To run this project locally, you need a simple local web server. Modern browsers
 
 ### Running the Application
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-username/gaming-lounge-system.git
-    cd gaming-lounge-system
-    ```
+1.  **Clone the repository or download the files.**
 
 2.  **Start a local web server from the project directory.** Here are a few popular and easy ways:
 
@@ -77,6 +75,25 @@ To run this project locally, you need a simple local web server. Modern browsers
 
 3.  **Open the application in your browser.**
     The server will typically start on a port like `8000`, `5000`, or `5500`. Open your browser and navigate to `http://localhost:<PORT>`, for example, `http://localhost:8000`.
+
+## Deployment to GitHub Pages
+
+This project is configured to be deployed directly to GitHub Pages without any build step.
+
+1.  **Create a new repository on GitHub** and push the project files to it.
+
+2.  **Enable GitHub Pages for your repository:**
+    - Go to your repository's **Settings** tab.
+    - In the left sidebar, click on **Pages**.
+    - Under "Build and deployment", for the "Source", select **Deploy from a branch**.
+    - Select the branch you want to deploy from (usually `main` or `master`) and keep the folder as `/ (root)`.
+    - Click **Save**.
+
+3.  **Wait for deployment:** GitHub will start a deployment process. It might take a few minutes. You can track its progress in the **Actions** tab of your repository.
+
+4.  **Access your site:** Once the deployment is complete, your site will be available at `https://<your-username>.github.io/<your-repository-name>/`.
+
+The project uses relative paths and an in-browser transpiler (Babel), so it should work out-of-the-box on GitHub Pages.
 
 ## Default Credentials
 
