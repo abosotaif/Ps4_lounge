@@ -11,13 +11,14 @@ interface Props {
 
 const StartSessionModal: React.FC<Props> = ({ deviceId, onClose }) => {
   const { startSession } = useAppContext();
-  const [gameType, setGameType] = useState<GameType>(GameType.Double);
+  const [gameType, setGameType] = useState<GameType>(GameType.Single);
   const [timeMode, setTimeMode] = useState<TimeMode>(TimeMode.Open);
   const [duration, setDuration] = useState<number>(60);
+  const [playerName, setPlayerName] = useState('');
   const { t } = useTranslation();
 
   const handleStart = () => {
-    startSession(deviceId, gameType, timeMode, timeMode === TimeMode.Timed ? duration : undefined);
+    startSession(deviceId, gameType, timeMode, playerName, timeMode === TimeMode.Timed ? duration : undefined);
     onClose();
   };
 
@@ -27,8 +28,21 @@ const StartSessionModal: React.FC<Props> = ({ deviceId, onClose }) => {
         <h2 className="text-xl font-bold mb-4">{t('start_session')} - {t('device')} {deviceId}</h2>
         
         <div className="mb-4">
+            <label htmlFor="playerName" className="block font-medium mb-2">{t('player_name')}</label>
+            <input
+              id="playerName"
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              className="w-full p-2 border rounded bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+              placeholder={t('enter_player_name_optional')}
+            />
+        </div>
+
+        <div className="mb-4">
           <label className="block font-medium mb-2">{t('game_type')}</label>
-          <div className="flex gap-4">
+          <div className="flex gap-2">
+            <button onClick={() => setGameType(GameType.Single)} className={`flex-1 p-2 rounded ${gameType === GameType.Single ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>{t('single')}</button>
             <button onClick={() => setGameType(GameType.Double)} className={`flex-1 p-2 rounded ${gameType === GameType.Double ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>{t('double')}</button>
             <button onClick={() => setGameType(GameType.Quad)} className={`flex-1 p-2 rounded ${gameType === GameType.Quad ? 'bg-indigo-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>{t('quad')}</button>
           </div>

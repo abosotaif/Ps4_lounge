@@ -16,21 +16,55 @@ const ReportsView: React.FC = () => {
   const totalRevenue = filteredReports.reduce((sum, r) => sum + r.cost, 0);
 
   const handlePrintHTML = () => {
-    const printContent = printRef.current?.innerHTML;
-    if (!printContent) return;
+    const tableRows = filteredReports.map(r => `
+      <tr>
+        <td>${r.deviceId}</td>
+        <td>${new Date(r.startTime).toLocaleTimeString('en-US')}</td>
+        <td>${new Date(r.endTime).toLocaleTimeString('en-US')}</td>
+        <td>${r.durationMinutes} min</td>
+        <td>${r.gameType.charAt(0).toUpperCase() + r.gameType.slice(1)}</td>
+        <td>${r.cost.toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const printContent = `
+        <h1>Report for ${selectedDate}</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Device ID</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Duration</th>
+                    <th>Game Type</th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRows}
+            </tbody>
+             <tfoot>
+                <tr>
+                    <td colspan="5">Total</td>
+                    <td>${totalRevenue.toFixed(2)}</td>
+                </tr>
+            </tfoot>
+        </table>
+    `;
 
     const printWindow = window.open('', '', 'height=600,width=800');
     if(printWindow){
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>${t('report_details')}</title>
+                    <title>Report Details</title>
                     <style>
-                        body { font-family: 'Cairo', sans-serif; direction: rtl; }
+                        body { font-family: sans-serif; direction: ltr; }
                         table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                         th { background-color: #f2f2f2; }
-                        h1, h2 { text-align: center; }
+                        h1 { text-align: center; }
+                        tfoot { font-weight: bold; }
                     </style>
                 </head>
                 <body>${printContent}</body>
@@ -44,38 +78,26 @@ const ReportsView: React.FC = () => {
   };
 
   const handlePrintPDF = async () => {
-    // For Arabic support in jsPDF, a font that supports Arabic glyphs must be embedded.
-    // This is a complex process requiring a font file (e.g., a .ttf file).
-    // The following is a simplified example. For full production, you would need to
-    // add a font like 'Amiri' to jsPDF.
-    
     const doc = new jsPDF();
     
-    // This is a placeholder for real Arabic font loading.
-    // doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-    // doc.setFont('Amiri');
-
     doc.text(`Report for ${selectedDate}`, 105, 15, { align: 'center' });
 
-    // FIX: Changed from 'doc.autoTable' to the functional 'autoTable(doc, ...)' to avoid TypeScript module augmentation issues.
     autoTable(doc, {
-      head: [[t('cost'), t('game_type'), t('duration'), t('end_time'), t('start_time'), t('device_id')]],
+      head: [['Device ID', 'Start Time', 'End Time', 'Duration (min)', 'Game Type', 'Cost']],
       body: filteredReports.map(r => [
-        r.cost.toFixed(2),
-        t(r.gameType),
-        `${r.durationMinutes} min`,
-        new Date(r.endTime).toLocaleTimeString('ar-EG'),
-        new Date(r.startTime).toLocaleTimeString('ar-EG'),
         r.deviceId,
+        new Date(r.startTime).toLocaleTimeString('en-US'),
+        new Date(r.endTime).toLocaleTimeString('en-US'),
+        `${r.durationMinutes}`,
+        r.gameType.charAt(0).toUpperCase() + r.gameType.slice(1),
+        r.cost.toFixed(2),
       ]),
-      styles: { halign: 'right' },
-      headStyles: { halign: 'right' },
       didDrawPage: (data) => {
-        doc.text(t('report_details'), data.settings.margin.left, 15);
+        doc.text(`Report Details`, data.settings.margin.left, 10);
       },
     });
 
-    doc.text(`${t('total')}: ${totalRevenue.toFixed(2)}`, 14, (doc as any).lastAutoTable.finalY + 10);
+    doc.text(`Total: ${totalRevenue.toFixed(2)}`, 14, (doc as any).lastAutoTable.finalY + 10);
 
     doc.save(`report_${selectedDate}.pdf`);
   };

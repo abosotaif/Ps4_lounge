@@ -6,6 +6,7 @@ export enum DeviceStatus {
 }
 
 export enum GameType {
+  Single = 'single',
   Double = 'double',
   Quad = 'quad',
 }
@@ -26,6 +27,7 @@ export interface Session {
   startTime: number;
   gameType: GameType;
   timeMode: TimeMode;
+  playerName?: string;
   initialMinutes?: number;
   endTime?: number;
   status: 'active' | 'ending' | 'ended';

@@ -1,4 +1,3 @@
-
 import { Device, DeviceStatus, Credentials } from './types';
 
 export const INITIAL_DEVICES: Device[] = [
@@ -10,6 +9,7 @@ export const INITIAL_DEVICES: Device[] = [
 ];
 
 export const INITIAL_PRICES = {
+  single: 10, // per hour
   double: 20, // per hour
   quad: 30,   // per hour
 };
@@ -21,6 +21,7 @@ export const INITIAL_CREDENTIALS: Credentials = {
 };
 
 export const INITIAL_LABELS = {
+  app_title: "نظام صالة الألعاب",
   dashboard: "لوحة التحكم",
   reports: "التقارير",
   admin: "الإدارة",
@@ -34,9 +35,10 @@ export const INITIAL_LABELS = {
   busy: "مشغول",
   maintenance: "تحت الصيانة",
   start_session: "بدء جلسة",
-  end_session: "إنهاء الجلساة",
+  end_session: "إنهاء الجلسة",
   session_details: "تفاصيل الجلسة",
   game_type: "نوع اللعب",
+  single: "فردي",
   double: "زوجي",
   quad: "رباعي",
   time_mode: "نمط التوقيت",
@@ -70,6 +72,7 @@ export const INITIAL_LABELS = {
   enter_admin_password: "الرجاء إدخال كلمة مرور المدير للوصول",
   submit: "إرسال",
   price_management: "إدارة الأسعار",
+  single_price_per_hour: "سعر اللعب الفردي (للساعة)",
   double_price_per_hour: "سعر اللعب الزوجي (للساعة)",
   quad_price_per_hour: "سعر اللعب الرباعي (للساعة)",
   update_prices: "تحديث الأسعار",
@@ -101,4 +104,12 @@ export const INITIAL_LABELS = {
   new_admin_password: "كلمة سر الإدارة الجديدة",
   store_securely_warning: "هام: يرجى تخزين هذه المعلومات في مكان آمن. لا يمكن استعادتها.",
   passwords_updated_success: "تم تحديث كلمات المرور بنجاح!",
+  search_by_device_name: "البحث باسم الجهاز...",
+  all_statuses: "كل الحالات",
+  no_devices_match_search: "لا توجد أجهزة تطابق معايير البحث.",
+  player_name: "اسم اللاعب",
+  enter_player_name_optional: "أدخل اسم اللاعب (اختياري)",
+  session_ended_summary_title: "انتهت الجلسة",
+  player_must_pay: "المبلغ المطلوب دفعه",
+  close: "إغلاق",
 };

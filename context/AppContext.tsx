@@ -1,10 +1,9 @@
-
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { Device, Session, Report, DeviceStatus, GameType, TimeMode, Page, AppLabels, Credentials } from '../types';
 import { INITIAL_DEVICES, INITIAL_PRICES, INITIAL_LABELS, INITIAL_CREDENTIALS } from '../constants';
 
 interface AppContextType {
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'blue_orange';
   toggleTheme: () => void;
   isAuthenticated: boolean;
   login: (user: string, pass: string) => boolean;
@@ -14,20 +13,22 @@ interface AppContextType {
   deleteDevice: (id: number) => void;
   updateDeviceStatus: (id: number, status: DeviceStatus) => void;
   sessions: { [key: number]: Session | undefined };
-  startSession: (deviceId: number, gameType: GameType, timeMode: TimeMode, initialMinutes?: number) => void;
+  startSession: (deviceId: number, gameType: GameType, timeMode: TimeMode, playerName?: string, initialMinutes?: number) => void;
   endSession: (deviceId: number) => void;
   updateSession: (deviceId: number, updates: Partial<Session>) => void;
   reports: Report[];
-  addReport: (report: Omit<Report, 'id' | 'date'>) => void;
+  addReport: (report: Omit<Report, 'id' | 'date'>) => Report;
   deleteReports: () => void;
-  prices: { double: number; quad: number };
-  updatePrices: (newPrices: { double: number; quad: number }) => void;
+  prices: { single: number; double: number; quad: number };
+  updatePrices: (newPrices: { single: number; double: number; quad: number }) => void;
   page: Page;
   setPage: (page: Page) => void;
   labels: AppLabels;
   updateLabels: (newLabels: AppLabels) => void;
   credentials: Credentials;
   updateCredentials: (newCreds: Credentials) => void;
+  lastEndedSession: Report | null;
+  clearLastEndedSession: () => void;
 }
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -37,17 +38,18 @@ const APP_STATE_KEY = 'gamingLoungeState';
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark' | 'blue_orange'>('dark');
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [devices, setDevices] = useState<Device[]>(INITIAL_DEVICES);
   const [sessions, setSessions] = useState<{ [key: number]: Session | undefined }>({
-     3: { deviceId: 3, startTime: Date.now() - 30 * 60 * 1000, gameType: GameType.Double, timeMode: TimeMode.Open, status: 'active' }
+     3: { deviceId: 3, startTime: Date.now() - 30 * 60 * 1000, gameType: GameType.Double, timeMode: TimeMode.Open, status: 'active', playerName: 'أحمد' }
   });
   const [reports, setReports] = useState<Report[]>([]);
   const [prices, setPrices] = useState(INITIAL_PRICES);
   const [page, setPage] = useState<Page>(Page.DASHBOARD);
   const [labels, setLabels] = useState<AppLabels>(INITIAL_LABELS);
   const [credentials, setCredentials] = useState<Credentials>(INITIAL_CREDENTIALS);
+  const [lastEndedSession, setLastEndedSession] = useState<Report | null>(null);
 
   useEffect(() => {
     try {
@@ -86,7 +88,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, [theme, isAuthenticated, devices, sessions, reports, prices, labels, credentials, isLoaded]);
 
-  const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light');
+  const toggleTheme = () => setTheme(currentTheme => {
+    if (currentTheme === 'light') return 'dark';
+    if (currentTheme === 'dark') return 'blue_orange';
+    return 'light'; // from blue_orange to light
+  });
 
   const login = (user: string, pass: string): boolean => {
     if (user === credentials.loginUser && pass === credentials.loginPass) {
@@ -113,7 +119,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setDevices(prev => prev.map(d => (d.id === id ? { ...d, status } : d)));
   };
 
-  const startSession = (deviceId: number, gameType: GameType, timeMode: TimeMode, initialMinutes?: number) => {
+  const startSession = (deviceId: number, gameType: GameType, timeMode: TimeMode, playerName?: string, initialMinutes?: number) => {
     const now = Date.now();
     const newSession: Session = {
       deviceId,
@@ -121,6 +127,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       gameType,
       timeMode,
       status: 'active',
+      playerName: playerName || undefined,
     };
     if (timeMode === TimeMode.Timed && initialMinutes) {
       newSession.initialMinutes = initialMinutes;
@@ -141,17 +148,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
   };
 
+  const addReport = (reportData: Omit<Report, 'id' | 'date'>): Report => {
+    const newReport: Report = {
+      ...reportData,
+      id: `${Date.now()}-${reportData.deviceId}`,
+      date: new Date(reportData.startTime).toISOString().split('T')[0],
+      cost: parseFloat(reportData.cost.toFixed(2)),
+    };
+    setReports(prev => [...prev, newReport]);
+    return newReport;
+  };
 
   const endSession = (deviceId: number) => {
     const session = sessions[deviceId];
     if (!session) return;
 
     const endTime = Date.now();
-    const durationMinutes = Math.ceil((endTime - session.startTime) / (1000 * 60));
-    const pricePerHour = session.gameType === GameType.Double ? prices.double : prices.quad;
+    const durationMinutes = Math.floor((endTime - session.startTime) / (1000 * 60));
+    
+    let pricePerHour: number;
+    switch (session.gameType) {
+        case GameType.Single:
+            pricePerHour = prices.single;
+            break;
+        case GameType.Double:
+            pricePerHour = prices.double;
+            break;
+        case GameType.Quad:
+            pricePerHour = prices.quad;
+            break;
+        default:
+            pricePerHour = 0; // Fallback
+    }
+
     const cost = (durationMinutes / 60) * pricePerHour;
     
-    addReport({ deviceId, startTime: session.startTime, endTime, durationMinutes, gameType: session.gameType, cost });
+    const newReport = addReport({ deviceId, startTime: session.startTime, endTime, durationMinutes, gameType: session.gameType, cost });
+    setLastEndedSession(newReport);
     
     setSessions(prev => {
         const newSessions = { ...prev };
@@ -161,23 +194,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     updateDeviceStatus(deviceId, DeviceStatus.Available);
   };
 
-  const addReport = (reportData: Omit<Report, 'id' | 'date'>) => {
-    const newReport: Report = {
-      ...reportData,
-      id: `${Date.now()}-${reportData.deviceId}`,
-      date: new Date(reportData.startTime).toISOString().split('T')[0],
-      cost: parseFloat(reportData.cost.toFixed(2)),
-    };
-    setReports(prev => [...prev, newReport]);
-  };
-
   const deleteReports = () => setReports([]);
   
-  const updatePrices = (newPrices: { double: number; quad: number }) => setPrices(newPrices);
+  const updatePrices = (newPrices: { single: number; double: number; quad: number }) => setPrices(newPrices);
   
   const updateLabels = (newLabels: AppLabels) => setLabels(newLabels);
 
   const updateCredentials = (newCreds: Credentials) => setCredentials(newCreds);
+  
+  const clearLastEndedSession = () => setLastEndedSession(null);
 
   const value = {
     theme, toggleTheme,
@@ -189,6 +214,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     page, setPage,
     labels, updateLabels,
     credentials, updateCredentials,
+    lastEndedSession, clearLastEndedSession,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
